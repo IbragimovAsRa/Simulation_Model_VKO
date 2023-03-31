@@ -14,3 +14,6 @@
 - Координаты и ттх 3-х зенитно-ракетных дивизионов (зрдн);
 - Координаты и зона действия СПРО;
 - Генератор целей, создающий до 30 целей одновременно.
+
+
+![github-small](https://github.com/IbragimovAsRa/SimulationModelVKO/blob/main/VKO.png)
