@@ -18,7 +18,6 @@ function tangens() { # угол в градусах
 	echo $tan
 }
 
-
 function target_in_sector() { # на вход поступают координаты цели
 	x_target=$1
 	y_target=$2
@@ -38,27 +37,23 @@ function target_in_sector() { # на вход поступают координ�
 		elif (( ($x_delt > 0) && (($y_delt < 0))  )); then
 			target_angle_degr=$((target_angle_degr + 360))
 		fi
-		if (( ($(($a - $angle_sector/2)) < 0) && ($target_angle_degr > 180) )); then
-			added=360
-		else 
-			added=0
-		fi
-		
-		if (( ))
-		
-		echo "added = $added"
-		echo "left = $((-$angle_sector/2 + $a + added))"
-		echo "right = $(($angle_sector/2 + $a + added))"
-		if ((($target_angle_degr < $(($angle_sector/2 + $a + added))) && (target_angle_degr > $((-$angle_sector/2 + $a + added))))); then
+		left_limit=$((-$angle_sector/2 + $a))
+		right_limit=$(($angle_sector/2 + $a))		
+		if ((   ($((target_angle_degr - 360)) > $left_limit) && ($((target_angle_degr - 360)) < $right_limit)    )); then
+			echo "true"
+		elif (( ($target_angle_degr > $left_limit) && ($target_angle_degr < $right_limit) )); then
+			echo "true"
+		elif (( ($((target_angle_degr + 360)) > $left_limit) && ($((target_angle_degr + 360)) < $right_limit) )); then
 			echo "true"
 		else
 			echo "false"
 		fi		
-		else
+	else
 		echo "false"
 	fi
 }
 #--------------------------------------------------------------------------
 
-target_in_sector  6 1 
+target_in_sector  1 1 
+
 

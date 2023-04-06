@@ -1,5 +1,5 @@
-run:	script.sh
-	./script.sh
+run:	run.sh
+	./run.sh
 
 format:	script.sh
 	shfmt -l -w *.sh 
