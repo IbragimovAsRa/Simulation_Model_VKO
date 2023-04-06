@@ -17,3 +17,11 @@
 
 
 ![github-small](https://github.com/IbragimovAsRa/SimulationModelVKO/blob/main/VKO.png)
+
+
+Makefile commands:
+--
+
+- make run (запуск моделирования)
+
+
