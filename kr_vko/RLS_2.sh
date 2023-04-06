@@ -1,14 +1,5 @@
-#!/bin/bash
+#!/bin/bash -l
 
-#-----------------------------------------------------------------------------------
-# 1) отладить одновременный запуск генератора целей и элементов ВКО
-# 2) написать алгоритм определения вхождения в радиус обзора
-# 3)
-#
-#
-#
-#
-#-----------------------------------------------------------------------------------
 
 rm -rf current_target current_targets_spd
 rm -rf current_target_temp
@@ -16,6 +7,61 @@ rm -rf current_target_temp
 touch current_targets_spd
 touch current_target
 touch current_target_temp
+
+# ------------------------------------------------------------------------
+#                      парсинг парамметров станции
+
+config=$(grep -e "RLS_2" vko_config)
+R=$(echo $config | cut -d ',' -f 2)
+x_center=$(echo $config | cut -d ',' -f 3)
+y_center=$(echo $config | cut -d ',' -f 4)
+a=$(echo $config | cut -d ',' -f 5)
+angle_sector=$(echo $config | cut -d ',' -f 6)
+
+
+
+					# Модуль рассчета попадания цели в сектор
+#--------------------------------------------------------------------------
+function tangens() { # угол в градусах
+	angle=$1
+	angle_r=$(echo "scale=10; pi=4*a(1); $angle*(pi/180)" | bc -l)
+	tan=$(echo "scale=10;s($angle_r) / c($angle_r)" | bc -l)
+	echo $tan
+}
+
+
+function target_in_sector() { # на вход поступают координаты цели
+	x_target=$1
+	y_target=$2
+	x_delt=$((x_target - x_center))
+	y_delt=$((y_target - y_center))
+	r_target=$((x_delt ** 2 + y_delt ** 2))
+	if (($r_target < $((R ** 2)))); then # первый фильтр (по радиусу)
+		k=$(echo  "($y_delt)/($x_delt)" | bc -l )
+		target_angle_rad=$(echo "scale=10; a( $y_delt / $x_delt )" | bc -l)
+		target_angle_degr=$(echo "scale=0; $target_angle_rad * 180 / 3.14159" | bc -l)
+		if (( ($x_delt < 0) && ($y_delt > 0))); then
+			target_angle_degr=$((target_angle_degr + 180))
+		elif (( ($x_delt < 0) && (($y_delt < 0))  )); then
+			target_angle_degr=$((target_angle_degr + 180))
+		elif (( ($x_delt > 0) && (($y_delt < 0))  )); then
+			target_angle_degr=$((target_angle_degr + 360))
+		fi
+		if (( ($(($a - $angle_sector/2)) < 0) && ($target_angle_degr > 180) )); then
+			added=360
+		else 
+			added=0
+		fi
+		if ((($target_angle_degr < $(($angle_sector/2 + $a + added))) && (target_angle_degr > $((-$angle_sector/2 + $a + added))))); then
+			echo "true"
+		else
+			echo "false"
+		fi		
+		else
+		echo "false"
+	fi
+}
+#--------------------------------------------------------------------------
 
 while true; do
 	# обработка новой пачки координат целей
@@ -76,3 +122,4 @@ while true; do
 	#------------------------------------------------------------------------------------------
 	sleep 0.5
 done
+

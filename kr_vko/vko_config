@@ -1,0 +1,6 @@
+#format: vko_type,  R,   x_center,    y_center,   (опцианально: a, angle_sector) 
+
+
+zrdn_1,10,0,0
+RLS_1,30,0,0,315,180
+
