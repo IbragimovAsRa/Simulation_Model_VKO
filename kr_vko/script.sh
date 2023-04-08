@@ -11,6 +11,7 @@ rm -rf current_target_temp
 touch current_targets_spd
 touch current_target
 touch current_target_temp
+
 sleep 0.9
 while true; do
 	# обработка новой пачки координат целей
@@ -31,7 +32,6 @@ while true; do
 					# ---------------------------рассчет скорости --------------------------------------
 					X_old=$(cat current_target_temp | grep -e "$target" | cut -d ',' -f 2)
 					Y_old=$(cat current_target_temp | grep -e "$target" | cut -d ',' -f 3)
-
 					X_delt=$((X - X_old))
 					Y_delt=$((Y - Y_old))
 
@@ -57,7 +57,7 @@ while true; do
 
 			sed -i "/$target/d" current_target_temp
 		else
-			echo -e "\nОбнаружена цель ID:$target с координатами x=$X, y=$Y"
+			echo -e "\n\033[31mОбнаружена цель ID:$target с координатами x=$X, y=$Y\033[0m"
 			echo "$target,$X,$Y" >>current_target
 		fi
 	done
