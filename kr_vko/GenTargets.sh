@@ -53,7 +53,6 @@ while :; do
 				"К.ракета")
 					tsign="-"
 					maps[$((TargetsId[8 + 10 * i] + TargetsId[9 + 10 * i] * 130))]=$tsign
-					;;
 				esac
 				info="${mapsid[$((TargetsId[9 + 10 * i] * 130))]} $destinXY$tsign ${TargetsId[0 + 10 * $i]} X$((${TargetsId[1 + 10 * $i]} / 1000)):${TargetsId[3 + 10 * $i]} Y$((${TargetsId[2 + 10 * $i]} / 1000)):${TargetsId[4 + 10 * $i]} "
 				mapsid[$((TargetsId[9 + 10 * i] * 130))]=${info:0:128}

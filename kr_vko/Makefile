@@ -7,4 +7,4 @@ check:	script.sh
 stop:	
 	killall -9 xterm run.sh zrdn* 
 clean:	
-	rm -rf current*
+	rm -rf current* attacke*  log*
