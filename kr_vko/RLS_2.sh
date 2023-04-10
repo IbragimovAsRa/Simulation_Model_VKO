@@ -43,7 +43,6 @@ function target_in_sector() { # на вход поступают координ�
 }
 #--------------------------------------------------------------------------
 
-
 rm -rf current_target_RLS_2 current_targets_spd_RLS_2
 rm -rf current_target_temp_RLS_2
 

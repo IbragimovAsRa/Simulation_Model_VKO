@@ -1,5 +1,4 @@
-#!/bin/bash -l
-
+#!/bin/bash
 # Модуль рассчета попадания цели в сектор
 #--------------------------------------------------------------------------
 config=$(grep -e "RLS_1" vko_config)
@@ -41,9 +40,21 @@ function target_in_sector() { # на вход поступают координ�
 		return 1
 	fi
 }
-#--------------------------------------------------------------------------
 
+#           модуль для отправки сообщений
+#-----------------------------------------------------------------------------
+function gen_filename() {
+	echo "$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 10)"
+}
 
+function send_message() {
+	receiver=$1
+	message=$2
+	filename=$(gen_filename)
+	echo $message >"./messages/$receiver/$filename"
+}
+
+#-----------------------------------------------------------------------------
 rm -rf current_target_RLS_1 current_targets_spd_RLS_1
 rm -rf current_target_temp_RLS_1
 
@@ -97,6 +108,7 @@ while true; do
 				sed -i "/$target/d" current_target_temp_RLS_1
 			else
 				echo -e "\n\033[31mОбнаружена цель ID:$target с координатами x=$X, y=$Y\033[0m"
+				send_message KP_VKO "Обнаружена цель ID:$target с координатами x=$X, y=$Y"
 				echo "$target,$X,$Y" >>current_target_RLS_1
 			fi
 		fi
