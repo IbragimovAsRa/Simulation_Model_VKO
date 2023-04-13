@@ -48,12 +48,12 @@ while true; do
 	if ! diff files files_old >/dev/null; then
 	
 
-
+        cp files files_old
 		files=$(cat files)
 		cp current_target_zrdn_1 current_target_temp_zrdn_1
 
 		for file in $files; do
-
+            
 			target=$(echo "$file" | tail -c -7)
 			contents=$(cat "/tmp/GenTargets/Targets/$file")
 			X=$(echo "$contents" | grep -Eo '[0-9]+' | sed -n '1p')
@@ -125,7 +125,7 @@ while true; do
 		# обработка промахов
 
 
-		if [ $counter == 2 ]; then
+		if [ $counter == 3 ]; then
 			for mis in $(cat attacked_targets_old_zrdn_1 | sort  | uniq);	do
 				echo "промах по цели ID: $mis"
 				missile_launch $mis
@@ -135,7 +135,7 @@ while true; do
 		fi
 		counter=$(( counter + 1 ))
 	fi
-	ls -t /tmp/GenTargets/Targets | head -n 30 >files_old
-	sleep 0.4
+	#ls -t /tmp/GenTargets/Targets | head -n 30 >files_old
+	sleep 0.2
 
 done

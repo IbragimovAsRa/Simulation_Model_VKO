@@ -1,6 +1,6 @@
 #!/bin/bash
 
-
+# Модуль дописан (ПРОТЕСТИРОВАТЬ)
 
 config=$(grep -e "SPRO" vko_config)
 R=$(echo $config | cut -d ',' -f 2)
@@ -25,19 +25,16 @@ function detect_target_route () { # на вход поступает 4
     D=$( echo "scale=10; (2*$k*($b-$Y) - 2*$X)^2 - 4*(1+ $k^2)*($X^2 + ($b - $Y)^2 - $R^2)" | bc -l)
     echo "D=$D"
     if (( $(echo "$D > 0" | bc -l) )); then # первый фильтр
-        if (( $Y > $y )); then
-            if (( $Vy > 0)); then
-                return 0
-            else    
-                return 1
-            fi
+        # второй фильтр на сближение или отдоление
+        l_1=$(echo "sqrt( ($Y-$)^2 + ($X-$X)^2  )" | bc -l)
+        l_2=$(echo "sqrt( ($Y-$y+$Vy)^2 + ($X-$X+$Vx)^2  )" | bc -l)
+
+        if (( echo "$l2 < $l1" ));  then
+            return 0
         else
-            if (( $Vy < 0 )); then
-                return 0
-            else    
-                return 1
-            fi
+            return 1
         fi
+
     else 
         return 1
     fi
