@@ -12,7 +12,7 @@ sleep 1
 #xterm -geometry 80x24-940-60 -e "./RLS_2.sh 2>/dev/null" &
 #xterm -geometry 80x24-450-60 -e "./RLS_3.sh 2>/dev/null" &
 #xterm -geometry 160x17-1920-420 -e "./GenTargets.sh > log1" &
-
+openssl rand -base64 32 > tmp/key.txt
 ./zrdn_1.sh 2>/dev/null &
 ./KP_VKO.sh  &
 ./GenTargets.sh >/dev/null &

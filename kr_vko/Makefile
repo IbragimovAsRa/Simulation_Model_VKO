@@ -8,7 +8,7 @@ stop:
 	killall -9 xterm run.sh zrdn* 
 	killall -9 KP_VKO.sh
 clean:	
-	rm -rf current* attacke*  log*
+	rm -rf current* attacke*  log* files files_old
 
 
 show_log_db:

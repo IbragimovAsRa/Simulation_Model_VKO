@@ -2,7 +2,7 @@
 
 missile_count=100 # боекомплект ракет
 system_elem="zrdn_1"
-
+receive_path="messages/$system_elem"
 #-----------------------------------------------------------------------------
 config=$(grep -e "zrdn_1" vko_config)
 R=$(echo $config | cut -d ',' -f 2)
@@ -45,6 +45,22 @@ function missile_launch() { # передается id цели
 	touch /tmp/GenTargets/Destroy/$target_id
 	echo "$target_id" >>attacked_targets_zrdn_1
 }
+#-----------------------------------------------------------------------------
+#                       Приемник сообщений
+function receiver_mess() {
+    local message
+    local mess_file
+    mess_file="$(ls -t "$receive_path" | tail -1)"
+    if [ -n "$mess_file" ];   then
+        message=$(cat $receive_path/$mess_file)
+        if [ "$message" == "request of status" ]; then
+            send_message KP_VKO "status-OK"
+        fi
+        rm  -rf "$receive_path/$mess_file"       
+    fi
+    mess_file=""
+}
+
 #-----------------------------------------------------------------------------
 
 rm -rf current_target_zrdn_1 current_targets_spd_zrdn_1 misses_target_zrdn_1
@@ -152,6 +168,12 @@ while true; do
 		fi
 		counter=$(( counter + 1 ))
 	fi
+    #--------------------------------------------------
+    #           модуль приемника сообщений
+
+    receiver_mess
+
+    #--------------------------------------------------
 	sleep 0.2
 
 done

@@ -4,6 +4,24 @@
 # 2) начать сборку
 # 3) проверить детектор роботоспособности
 
+
+# для кодировки и декодировки используется симетричное шифрование OpenSSL
+
+
+
+#-----------------------------------------------
+#             Модуль для шифровки и декодирование
+
+function message_encoder() {
+    local mes=$1
+    local path=$2
+    echo "$mes" | openssl enc -aes-256-cbc -salt -pass file:tmp/key.txt -out $path 2> /dev/null)
+}
+
+function message_decoder() {
+    local path=$2
+    openssl enc -d -aes-256-cbc -salt -pass file:tmp/key.txt -in $path 2> /dev/null)
+}
 # -----------------------------------------------
 function init_data_base() {
     rm -rf db/log.db
@@ -43,32 +61,30 @@ function make_log() {
 # ----------------------------------------------------------------
 # формат файла status,zrdn_1,ok
 
-function send_ping() {
-    echo "request of status" | tee 
-    "messages/zrdn_1/ping_file"
-    "messages/zrdn_2/ping_file"
-    "messages/zrdn_3/ping_file"
-    "messages/RLS_1/ping_file"
-    "messages/RLS_2/ping_file"
-    "messages/RLS_3/ping_file"
-    "messages/SPRO/ping_file"
-    > /dev/null
+function send_ping() { 
+    echo "request of status" > "messages/zrdn_1/ping_file"
+    echo "request of status" > "messages/zrdn_2/ping_file"
+    echo "request of status" > "messages/zrdn_3/ping_file"
+    echo "request of status" > "messages/RLS_1/ping_file"
+    echo "request of status" > "messages/RLS_2/ping_file"
+    echo "request of status" > "messages/RLS_3/ping_file"
+    echo "request of status" > "messages/SPRO/ping_file"
 }
 
 function check_status_mes() {
     local system_elem;
-    if grep -e "status" -f "$receive_path/$mess_file" > tmp_state;  then
-        system_elem=$(cat tmp_state | cut -d ',' -f 2)
-		sed -i "/$system_elem/d" tmp_all_states
-    fi
+    grep -e "status"  "$receive_path/$mess_file" > tmp_state
+    system_elem=$(cat tmp_state | cut -d ',' -f 2)
+    echo "сообщение получено"
+	sed -i "/$system_elem/d" tmp_all_states
+    
 
 }
 
 function check_status_vko_elems() {
     local check_time=8
-    check_status_mes
     local diff=$(( $(date +%s) - $timer ))
-    if [ $diff > $check_time ]; then
+    if [ $diff -gt $check_time ]; then
         if [[ -s "tmp_all_states" ]]; then
             for vko_elem in $(cat tmp_all_states); do
                 if ! grep -e "$vko_elem" out_of_vko_elem > /dev/null; then
@@ -77,14 +93,16 @@ function check_status_vko_elems() {
                 fi
             done
         fi
+        echo -e "zrdn_1\nzrdn_2\nzrdn_3\nRLS_1\nRLS_2" > tmp_all_states
+        send_ping
+        timer=$(date +%s)
     fi
-    echo -e "zrdn_1\n"
-    send_ping
 }
 
 # ----------------------------------------------------------------
 # ------ Инициализация -------------------------------------------
 rm -rf logs/logs_file tmp_all_states out_of_vko_elem
+mkdir logs 2> /dev/null
 touch logs/logs_file # ЖУРНАЛ
 receive_path="messages/KP_VKO"
 rm -rf $receive_path/*
@@ -94,16 +112,22 @@ timer=$(date +%s)
 # ----------------------------------------------------------------
 
 while true; do
+    check_status_vko_elems
     mess_file="$(ls -t "$receive_path" | tail -1)"
     if [ -n "$mess_file" ];   then
-        Time=$(cat $receive_path/$mess_file | cut -d ',' -f 1)
-        SystemElem=$(cat $receive_path/$mess_file | cut -d ',' -f 2)
-        Info=$(cat $receive_path/$mess_file | cut -d ',' -f 3)
-        TargetId=$(cat $receive_path/$mess_file | cut -d ',' -f 4)
-        make_log "$Time" "$SystemElem" "$Info" "$TargetId"
+        message=$(message_decoder "$receive_path/$mess_file")
+        if echo "$message" | grep -e "status" > /dev/null;  then
+            check_status_mes
+        else
+            Time=$(cat $receive_path/$mess_file | cut -d ',' -f 1)
+            SystemElem=$(cat $receive_path/$mess_file | cut -d ',' -f 2)
+            Info=$(cat $receive_path/$mess_file | cut -d ',' -f 3)
+            TargetId=$(cat $receive_path/$mess_file | cut -d ',' -f 4)
+            make_log "$Time" "$SystemElem" "$Info" "$TargetId"
+        fi
         rm  -rf "$receive_path/$mess_file"       
     fi
-    #check_status_vko_elems
     mess_file=""
+    
 	sleep 0.05
 done
