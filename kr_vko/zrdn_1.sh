@@ -1,5 +1,7 @@
 #!/bin/bash
+
 missile_count=100 # боекомплект ракет
+system_elem="zrdn_1"
 
 #-----------------------------------------------------------------------------
 config=$(grep -e "zrdn_1" vko_config)
@@ -7,27 +9,43 @@ R=$(echo $config | cut -d ',' -f 2)
 x_center=$(echo $config | cut -d ',' -f 3)
 y_center=$(echo $config | cut -d ',' -f 4)
 
+#           модуль для отправки сообщений
+#-----------------------------------------------------------------------------
+function gen_filename() {
+	echo "$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 10)"
+}
+
+function send_message() {
+	local receiver=$1
+	local message=$2
+	local filename=$(gen_filename)
+	echo "$(date +"%y-%m-%d %H:%M:%S"),$system_elem,$message" >./messages/$receiver/$filename
+}
+
+#-----------------------------------------------------------------------------
+
 function target_in_sector() {
-	x_target=$1
-	y_target=$2
-	x_delt=$((x_center - x_target))
-	y_delt=$((y_center - y_target))
-	r_target=$((x_delt ** 2 + y_delt ** 2))
+	local x_target=$1
+	local y_target=$2
+	local x_delt=$((x_center - x_target))
+	local y_delt=$((y_center - y_target))
+	local r_target=$((x_delt ** 2 + y_delt ** 2))
 	if (($r_target < $((R ** 2)))); then
 		return 0
 	else
 		return 1
 	fi
 }
+#-----------------------------------------------------------------------------
 
 function missile_launch() { # передается id цели
-	target_id=$1
-	echo "Произвиден пуск ракеты по цели ID:$target_id"
-	#missile_count= $(( $missile_count - 1 ))
-	echo "В боекомплекте осталось ракет:$missile_count"
+	local target_id=$1
+	send_message KP_VKO "Произвиден пуск ракеты по цели,$target_id"
+	#missile_count= $( $missile_count - 1 )
 	touch /tmp/GenTargets/Destroy/$target_id
 	echo "$target_id" >>attacked_targets_zrdn_1
 }
+#-----------------------------------------------------------------------------
 
 rm -rf current_target_zrdn_1 current_targets_spd_zrdn_1 misses_target_zrdn_1
 rm -rf current_target_temp_zrdn_1 attacked_targets_zrdn_1 attacked_targets_old_zrdn_1
@@ -82,8 +100,8 @@ while true; do
 							else
 								type_target="Неопознанный обьект"
 							fi
-							int_spd=$(echo $spd | awk '{print int($1)}')
-							echo -e "\nИнформация по цели ID: $target\n - Тип: $type_target\n - Скорость: Vx = $X_delt м/с, Vy = $Y_delt м/с, Vabs = $int_spd м/с\n"
+							# отправка информации по цели на КП
+							send_message KP_VKO "Обнаружена цель: $type_target,$target"
 
 							echo "$target,$type_target" >>current_targets_spd_zrdn_1
 							
@@ -99,7 +117,6 @@ while true; do
 
 					sed -i "/$target/d" current_target_temp_zrdn_1
 				else
-					echo -e "\n\033[31mОбнаружена цель ID:$target с координатами x=$X, y=$Y\033[0m"
 					echo "$target,$X,$Y" >>current_target_zrdn_1
 				fi
 			fi
@@ -111,12 +128,12 @@ while true; do
 		
 			dead_target_id=$(echo $dead_target | cut -d ',' -f 1)
 			if grep -q "$dead_target_id" attacked_targets_zrdn_1; then
-				echo -e "\nЦель ID: $dead_target_id уничтожена"
+				send_message KP_VKO "Цель уничтожена,$dead_target_id"
 				sed -i "/$dead_target_id/d" attacked_targets_zrdn_1
 				sed -i "/$dead_target_id/d" attacked_targets_old_zrdn_1
 
 			else
-				echo -e "\nЦель ID: $dead_target_id пропала с радара"
+				send_message KP_VKO "Цель пропала с радара,$dead_target_id"
 			fi
 			sed -i "/$dead_target/d" current_target_zrdn_1
 		done
@@ -127,7 +144,7 @@ while true; do
 
 		if [ $counter == 3 ]; then
 			for mis in $(cat attacked_targets_old_zrdn_1 | sort  | uniq);	do
-				echo "промах по цели ID: $mis"
+				send_message KP_VKO "Промах по цели,$mis"
 				missile_launch $mis
 			done
 			cp attacked_targets_zrdn_1 attacked_targets_old_zrdn_1
@@ -135,7 +152,6 @@ while true; do
 		fi
 		counter=$(( counter + 1 ))
 	fi
-	#ls -t /tmp/GenTargets/Targets | head -n 30 >files_old
 	sleep 0.2
 
 done
