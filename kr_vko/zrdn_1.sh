@@ -9,8 +9,25 @@ R=$(echo $config | cut -d ',' -f 2)
 x_center=$(echo $config | cut -d ',' -f 3)
 y_center=$(echo $config | cut -d ',' -f 4)
 
-#           модуль для отправки сообщений
-#-----------------------------------------------------------------------------
+# +-----------------------------------------------------------------------------+
+# |                  Модуль для шифровки и декодирование                        |
+# +-----------------------------------------------------------------------------+
+
+function send_encoded_message() {
+    local mes=$1
+    local path=$2
+    echo "$mes" | openssl enc -aes-256-cbc -salt -pass file:temp/key.txt -out $path 2> /dev/null
+}
+
+function decrypt_encoded_message() {
+    local path=$1
+    openssl enc -d -aes-256-cbc -salt -pass file:temp/key.txt -in $path 2> /dev/null
+}
+
+# +----------------------------------------------------------------------------+
+# |                    Модуль для отправки сообщений                           |
+# +----------------------------------------------------------------------------+
+
 function gen_filename() {
 	echo "$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 10)"
 }
@@ -19,7 +36,7 @@ function send_message() {
 	local receiver=$1
 	local message=$2
 	local filename=$(gen_filename)
-	echo "$(date +"%y-%m-%d %H:%M:%S"),$system_elem,$message" >./messages/$receiver/$filename
+	send_encoded_message "$(date +"%y-%m-%d %H:%M:%S"),$system_elem,$message" "./messages/$receiver/$filename"
 }
 
 #-----------------------------------------------------------------------------
@@ -52,7 +69,7 @@ function receiver_mess() {
     local mess_file
     mess_file="$(ls -t "$receive_path" | tail -1)"
     if [ -n "$mess_file" ];   then
-        message=$(cat $receive_path/$mess_file)
+        message=$(decrypt_encoded_message "$receive_path/$mess_file")
         if [ "$message" == "request of status" ]; then
             send_message KP_VKO "status-OK"
         fi

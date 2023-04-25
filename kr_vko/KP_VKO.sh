@@ -11,16 +11,15 @@
 
 #-----------------------------------------------
 #             Модуль для шифровки и декодирование
-
-function message_encoder() {
+function send_encoded_message() {
     local mes=$1
     local path=$2
-    echo "$mes" | openssl enc -aes-256-cbc -salt -pass file:tmp/key.txt -out $path 2> /dev/null)
+    echo "$mes" | openssl enc -aes-256-cbc -salt -pass file:temp/key.txt -out $path 2> /dev/null
 }
 
-function message_decoder() {
-    local path=$2
-    openssl enc -d -aes-256-cbc -salt -pass file:tmp/key.txt -in $path 2> /dev/null)
+function decrypt_encoded_message() {
+    local path=$1
+    openssl enc -d -aes-256-cbc -salt -pass file:temp/key.txt -in $path 2> /dev/null
 }
 # -----------------------------------------------
 function init_data_base() {
@@ -61,24 +60,22 @@ function make_log() {
 # ----------------------------------------------------------------
 # формат файла status,zrdn_1,ok
 
-function send_ping() { 
-    echo "request of status" > "messages/zrdn_1/ping_file"
-    echo "request of status" > "messages/zrdn_2/ping_file"
-    echo "request of status" > "messages/zrdn_3/ping_file"
-    echo "request of status" > "messages/RLS_1/ping_file"
-    echo "request of status" > "messages/RLS_2/ping_file"
-    echo "request of status" > "messages/RLS_3/ping_file"
-    echo "request of status" > "messages/SPRO/ping_file"
+function send_ping() {
+    send_encoded_message "request of status"  "messages/zrdn_1/ping_file"
+    send_encoded_message "request of status"  "messages/zrdn_2/ping_file"
+    send_encoded_message "request of status"  "messages/zrdn_3/ping_file"
+    send_encoded_message "request of status"  "messages/RLS_1/ping_file"
+    send_encoded_message "request of status"  "messages/RLS_2/ping_file"
+    send_encoded_message "request of status"  "messages/RLS_3/ping_file"
+    send_encoded_message "request of status"  "messages/SPRO/ping_file"
 }
 
 function check_status_mes() {
     local system_elem;
-    grep -e "status"  "$receive_path/$mess_file" > tmp_state
+    local message=$(decrypt_encoded_message "$receive_path/$mess_file")
+    echo "$message" | grep -e "status" > tmp_state
     system_elem=$(cat tmp_state | cut -d ',' -f 2)
-    echo "сообщение получено"
 	sed -i "/$system_elem/d" tmp_all_states
-    
-
 }
 
 function check_status_vko_elems() {
@@ -93,7 +90,7 @@ function check_status_vko_elems() {
                 fi
             done
         fi
-        echo -e "zrdn_1\nzrdn_2\nzrdn_3\nRLS_1\nRLS_2" > tmp_all_states
+        echo -e "zrdn_1\nzrdn_2\nzrdn_3\nRLS_1\nRLS_2\nRLS_3\nSPRO" > tmp_all_states
         send_ping
         timer=$(date +%s)
     fi
@@ -101,11 +98,11 @@ function check_status_vko_elems() {
 
 # ----------------------------------------------------------------
 # ------ Инициализация -------------------------------------------
-rm -rf logs/logs_file tmp_all_states out_of_vko_elem
-mkdir logs 2> /dev/null
+
+rm -rf logs/logs_file messages/KP_VKO/*
 touch logs/logs_file # ЖУРНАЛ
+touch tmp_all_states out_of_vko_elem
 receive_path="messages/KP_VKO"
-rm -rf $receive_path/*
 init_data_base
 sleep 2
 timer=$(date +%s)
@@ -115,14 +112,14 @@ while true; do
     check_status_vko_elems
     mess_file="$(ls -t "$receive_path" | tail -1)"
     if [ -n "$mess_file" ];   then
-        message=$(message_decoder "$receive_path/$mess_file")
+        message=$(decrypt_encoded_message "$receive_path/$mess_file")
         if echo "$message" | grep -e "status" > /dev/null;  then
             check_status_mes
         else
-            Time=$(cat $receive_path/$mess_file | cut -d ',' -f 1)
-            SystemElem=$(cat $receive_path/$mess_file | cut -d ',' -f 2)
-            Info=$(cat $receive_path/$mess_file | cut -d ',' -f 3)
-            TargetId=$(cat $receive_path/$mess_file | cut -d ',' -f 4)
+            Time=$(echo "$message" | cut -d ',' -f 1)
+            SystemElem=$(echo "$message" | cut -d ',' -f 2)
+            Info=$(echo "$message" | cut -d ',' -f 3)
+            TargetId=$(echo "$message" | cut -d ',' -f 4)
             make_log "$Time" "$SystemElem" "$Info" "$TargetId"
         fi
         rm  -rf "$receive_path/$mess_file"       
