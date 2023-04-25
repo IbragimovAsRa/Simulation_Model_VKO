@@ -1,27 +1,25 @@
 #!/bin/bash
 
-# 1) проверить детектор направления
-# 2) начать сборку
-# 3) проверить детектор роботоспособности
-
-
+# Получение случайного имени файла сообщения
+function gen_filename() {
+	echo "$(head /dev/urandom | tr -dc A-Za-z0-9 | head -c 10)"
+}
+# +-----------------------------------------------------------------------------+
+# |                  Модуль для шифровки и декодирования                        |
+# +-----------------------------------------------------------------------------+
 # для кодировки и декодировки используется симетричное шифрование OpenSSL
-
-
-
-#-----------------------------------------------
-#             Модуль для шифровки и декодирование
 function send_encoded_message() {
     local mes=$1
     local path=$2
     echo "$mes" | openssl enc -aes-256-cbc -salt -pass file:temp/key.txt -out $path 2> /dev/null
 }
-
 function decrypt_encoded_message() {
     local path=$1
     openssl enc -d -aes-256-cbc -salt -pass file:temp/key.txt -in $path 2> /dev/null
 }
-# -----------------------------------------------
+# +-----------------------------------------------------------------------------+
+# |                        Модуль API для баз данных                            |
+# +-----------------------------------------------------------------------------+
 function init_data_base() {
     rm -rf db/log.db
     local transaction="DROP TABLE IF EXISTS  log;
@@ -34,9 +32,7 @@ function init_data_base() {
                             TargetId TEXT
                         );"
     sqlite3 db/log.db "$transaction"
-    sqlite3 db/log.db ".mode table"
 }
-
 function insert_to_database() {
     local Time=$1
     local SystemElem=$2
@@ -46,7 +42,9 @@ function insert_to_database() {
                  VALUES ('"$Time"','"$SystemElem"','"$Info"','"$TargetId"');"
     sqlite3 db/log.db "$transaction"
 }
-
+# +-----------------------------------------------------------------------------+
+# |                           Модуль для логирования                            |
+# +-----------------------------------------------------------------------------+
 function make_log() {
     local Time=$1
     local SystemElem=$2
@@ -55,21 +53,20 @@ function make_log() {
     insert_to_database "$Time" "$SystemElem" "$Info" "$TargetId"
     echo  "$(date -d "$Time" +%d.%m\ %H:%M:%S) "$SystemElem": $Info, ID: $TargetId" >> logs/logs_file
 }
-
-#           Модуль для проверки роботоспособности элементов ВКО (передатчик)
-# ----------------------------------------------------------------
-# формат файла status,zrdn_1,ok
+# +-----------------------------------------------------------------------------+
+# |         Модуль для проверки роботоспособности элементов ВКО (передатчик)    |
+# +-----------------------------------------------------------------------------+
 
 function send_ping() {
-    send_encoded_message "request of status"  "messages/zrdn_1/ping_file"
-    send_encoded_message "request of status"  "messages/zrdn_2/ping_file"
-    send_encoded_message "request of status"  "messages/zrdn_3/ping_file"
-    send_encoded_message "request of status"  "messages/RLS_1/ping_file"
-    send_encoded_message "request of status"  "messages/RLS_2/ping_file"
-    send_encoded_message "request of status"  "messages/RLS_3/ping_file"
-    send_encoded_message "request of status"  "messages/SPRO/ping_file"
+    local filename=$(gen_filename)
+    send_encoded_message "request of status"  "messages/zrdn_1/$filename"
+    send_encoded_message "request of status"  "messages/zrdn_2/$filename"
+    send_encoded_message "request of status"  "messages/zrdn_3/$filename"
+    send_encoded_message "request of status"  "messages/RLS_1/$filename"
+    send_encoded_message "request of status"  "messages/RLS_2/$filename"
+    send_encoded_message "request of status"  "messages/RLS_3/$filename"
+    send_encoded_message "request of status"  "messages/SPRO/$filename"
 }
-
 function check_status_mes() {
     local system_elem;
     local message=$(decrypt_encoded_message "$receive_path/$mess_file")
@@ -77,7 +74,6 @@ function check_status_mes() {
     system_elem=$(cat tmp_state | cut -d ',' -f 2)
 	sed -i "/$system_elem/d" tmp_all_states
 }
-
 function check_status_vko_elems() {
     local check_time=8
     local diff=$(( $(date +%s) - $timer ))
@@ -89,24 +85,32 @@ function check_status_vko_elems() {
                     echo "$vko_elem" >> out_of_vko_elem
                 fi
             done
+            for var in $(cat out_of_vko_elem); do
+                if ! grep -e "$var" tmp_all_states > /dev/null; then
+                    make_log "$(date +"%y-%m-%d %H:%M:%S")" "$var" "Роботоспособность системы востановлена" "nan"
+                    sed -i "/$var/d" out_of_vko_elem
+                fi
+            done
         fi
+
         echo -e "zrdn_1\nzrdn_2\nzrdn_3\nRLS_1\nRLS_2\nRLS_3\nSPRO" > tmp_all_states
         send_ping
         timer=$(date +%s)
     fi
 }
-
-# ----------------------------------------------------------------
-# ------ Инициализация -------------------------------------------
+# ------------------------------------------------------------------------------|
+# Начальная инициализация
 
 rm -rf logs/logs_file messages/KP_VKO/*
-touch logs/logs_file # ЖУРНАЛ
-touch tmp_all_states out_of_vko_elem
+touch logs/logs_file
+touch tmp_all_states out_of_vko_elem 
 receive_path="messages/KP_VKO"
 init_data_base
 sleep 2
 timer=$(date +%s)
-# ----------------------------------------------------------------
+
+# ------------------------------------------------------------------------------|
+# Основная программа
 
 while true; do
     check_status_vko_elems
@@ -128,3 +132,4 @@ while true; do
     
 	sleep 0.05
 done
+# ------------------------------------------------------------------------------|

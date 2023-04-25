@@ -1,9 +1,8 @@
 #!/bin/bash
 
-missile_count=100 # боекомплект ракет
+bk=100 # боекомплект ракет
 system_elem="zrdn_1"
 receive_path="messages/$system_elem"
-#-----------------------------------------------------------------------------
 config=$(grep -e "zrdn_1" vko_config)
 R=$(echo $config | cut -d ',' -f 2)
 x_center=$(echo $config | cut -d ',' -f 3)
@@ -58,9 +57,9 @@ function target_in_sector() {
 function missile_launch() { # передается id цели
 	local target_id=$1
 	send_message KP_VKO "Произвиден пуск ракеты по цели,$target_id"
-	#missile_count= $( $missile_count - 1 )
+    bk=$((bk - 1))
 	touch /tmp/GenTargets/Destroy/$target_id
-	echo "$target_id" >>attacked_targets_zrdn_1
+	echo "$target_id" >> attacked_targets_zrdn_1
 }
 #-----------------------------------------------------------------------------
 #                       Приемник сообщений

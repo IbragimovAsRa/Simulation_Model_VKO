@@ -36,16 +36,16 @@ destroy_SPRO:
 
 # Команды востановления роботоспособности
 recover_zrdn_1:
-	./zrdn_1
+	./zrdn_1.sh
 recover_zrdn_2:
-	./zrdn_2
+	./zrdn_2.sh
 recover_zrdn_3:
-	./zrdn_3
+	./zrdn_3.sh
 recover_RLS_1:
-	./RLS_1
+	./RLS_1.sh
 recover_RLS_2:
-	./RLS_2
+	./RLS_2.sh
 recover_RLS_3:
-	./RLS_2
+	./RLS_2.sh
 recover_SPRO:
-	./SPRO
+	./SPRO.sh
