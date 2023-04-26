@@ -1,18 +1,12 @@
 #!/bin/bash
 # Пример уменьшения значения переменной на 1
 
-function aaa() {
-    echo "sdsds"
-    return 0
-}
+#!/bin/bash
 
+# Задаем значения
 
+X_delt=-3
+Y_delt=-3
+spd=$(echo "sqrt($(((X_delt ** 2) + (Y_delt ** 2))))" | bc -l)
 
-if [ -s "docum" ];  then
-    for var in $(cat docum); do 
-        if [ $var == "3" ]; then
-            break
-        fi
-        echo $var
-    done
-fi
+echo "$spd"
