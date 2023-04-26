@@ -12,6 +12,10 @@ killall zrdn_1.sh 2>/dev/null
 killall GenTargets.sh 1>/dev/null  2>/dev/null
 killall zrdn_2.sh 2>/dev/null
 killall zrdn_3.sh 2>/dev/null
+killall RLS_1.sh 2>/dev/null
+killall RLS_2.sh 2>/dev/null
+killall RLS_3.sh 2>/dev/null
+killall SPRO.sh 2>/dev/null
 killall KP_VKO.sh 2>/dev/null
 
 #make clean
