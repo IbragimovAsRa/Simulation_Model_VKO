@@ -7,10 +7,8 @@ check:	script.sh
 stop:	
 	killall -9 xterm run.sh zrdn* RLS* SPRO* KP_VKO.sh GenTargets.sh stop.sh 2> /dev/null
 clean:	
-	rm -rf current* attacke*   files files_old tmp_state tmp_all_states out_of_vko*  messages/KP_VKO/* 
-	rm -rf messages/KP_VKO/* messages/zrdn*/* messages/RLS*/* messages/SPRO/* temp/* 
-all_clean:
-	rm -rf current* attacke*   files files_old tmp_state tmp_all_states out_of_vko*  messages/KP_VKO/* 
+	rm -rf   messages/KP_VKO/*  temp/* messages/zrdn*/* messages/RLS*/* messages/SPRO/*
+all_clean: 
 	rm -rf messages/KP_VKO/* messages/zrdn*/* messages/RLS*/* messages/SPRO/* temp/* db/* logs/*
 show_log_db:
 	sqlite3 -column -header db/log.db "select * from log;"

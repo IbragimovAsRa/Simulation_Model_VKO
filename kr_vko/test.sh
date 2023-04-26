@@ -1,5 +1,18 @@
 #!/bin/bash
 # Пример уменьшения значения переменной на 1
-a=10
-a=$((a - 1))
-echo "Значение переменной a после уменьшения: $a"
+
+function aaa() {
+    echo "sdsds"
+    return 0
+}
+
+
+
+if [ -s "docum" ];  then
+    for var in $(cat docum); do 
+        if [ $var == "3" ]; then
+            break
+        fi
+        echo $var
+    done
+fi

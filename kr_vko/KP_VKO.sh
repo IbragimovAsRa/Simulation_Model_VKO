@@ -70,30 +70,30 @@ function send_ping() {
 function check_status_mes() {
     local system_elem;
     local message=$(decrypt_encoded_message "$receive_path/$mess_file")
-    echo "$message" | grep -e "status" > tmp_state
-    system_elem=$(cat tmp_state | cut -d ',' -f 2)
-	sed -i "/$system_elem/d" tmp_all_states
+    echo "$message" | grep -e "status" > temp/tmp_state
+    system_elem=$(cat temp/tmp_state | cut -d ',' -f 2)
+	sed -i "/$system_elem/d" temp/tmp_all_states
 }
 function check_status_vko_elems() {
     local check_time=8
     local diff=$(( $(date +%s) - $timer ))
     if [ $diff -gt $check_time ]; then
-        if [[ -s "tmp_all_states" ]]; then
-            for vko_elem in $(cat tmp_all_states); do
-                if ! grep -e "$vko_elem" out_of_vko_elem > /dev/null; then
+        if [[ -s "temp/tmp_all_states" ]]; then
+            for vko_elem in $(cat temp/tmp_all_states); do
+                if ! grep -e "$vko_elem" temp/out_of_vko_elem > /dev/null; then
                     make_log "$(date +"%y-%m-%d %H:%M:%S")" "$vko_elem" "Роботоспособность системы нарушена" "nan"
-                    echo "$vko_elem" >> out_of_vko_elem
+                    echo "$vko_elem" >> temp/out_of_vko_elem
                 fi
             done
-            for var in $(cat out_of_vko_elem); do
-                if ! grep -e "$var" tmp_all_states > /dev/null; then
+            for var in $(cat temp/out_of_vko_elem); do
+                if ! grep -e "$var" temp/tmp_all_states > /dev/null; then
                     make_log "$(date +"%y-%m-%d %H:%M:%S")" "$var" "Роботоспособность системы востановлена" "nan"
-                    sed -i "/$var/d" out_of_vko_elem
+                    sed -i "/$var/d" temp/out_of_vko_elem
                 fi
             done
         fi
 
-        echo -e "zrdn_1\nzrdn_2\nzrdn_3\nRLS_1\nRLS_2\nRLS_3\nSPRO" > tmp_all_states
+        echo -e "zrdn_1\nzrdn_2\nzrdn_3\nRLS_1\nRLS_2\nRLS_3\nSPRO" > temp/tmp_all_states
         send_ping
         timer=$(date +%s)
     fi
@@ -103,7 +103,7 @@ function check_status_vko_elems() {
 
 rm -rf logs/logs_file messages/KP_VKO/*
 touch logs/logs_file
-touch tmp_all_states out_of_vko_elem 
+touch temp/tmp_all_states temp/out_of_vko_elem 
 receive_path="messages/KP_VKO"
 init_data_base
 sleep 2

@@ -2,7 +2,7 @@
 
 rm -rf /tmp/GenTargets/Targets/*
 rm -rf ./messages/KP_VKO/*
-
+make clean
 sleep 1
 
 #xterm -geometry 80x24-1920-1080 -e "./zrdn_1.sh > log2 " &
@@ -13,7 +13,7 @@ sleep 1
 #xterm -geometry 80x24-450-60 -e "./RLS_3.sh 2>/dev/null" &
 #xterm -geometry 160x17-1920-420 -e "./GenTargets.sh > log1" &
 openssl rand -base64 32 > temp/key.txt
-./zrdn_1.sh 2>/dev/null &
+./zrdn_1.sh  &
 ./KP_VKO.sh  &
 ./GenTargets.sh >/dev/null &
 ./stop.sh
